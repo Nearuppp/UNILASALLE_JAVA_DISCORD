@@ -1,0 +1,6 @@
+sudo systemctl start mysqld 
+--- modifier l'ip dans le programme ---
+
+javac -cp .:lib/jbcrypt-0.4.jar:lib/mysql-connector-j-8.3.0.jar *.java
+java -cp .:lib/jbcrypt-0.4.jar:lib/mysql-connector-j-8.3.0.jar Server
+java -cp .:lib/jbcrypt-0.4.jar:lib/mysql-connector-j-8.3.0.jar ClientApp
