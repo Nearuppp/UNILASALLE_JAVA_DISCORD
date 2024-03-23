@@ -85,6 +85,34 @@ public class ClientApp {
                     }
                 });
 
+                passwordField.addActionListener(e -> {
+                    String username = userField.getText();
+                    String password = new String(passwordField.getPassword());
+
+                    if (registerCheckBox.isSelected()) {
+                        if (Arrays.equals(passwordField.getPassword(), passwordConfirmField.getPassword())) {
+                            client.send("REGISTER " + username + " " + password);
+                        } else {
+                            showMessageDialog(loginFrame, "Les mots de passe ne correspondent pas!", "Erreur",
+                                    JOptionPane.ERROR_MESSAGE, screenSize);
+                        }
+                    } else {
+                        client.send("LOGIN " + username + " " + password);
+                    }
+                });
+
+                passwordConfirmField.addActionListener(e -> {
+                    String username = userField.getText();
+                    String password = new String(passwordField.getPassword());
+
+                    if (Arrays.equals(passwordField.getPassword(), passwordConfirmField.getPassword())) {
+                        client.send("REGISTER " + username + " " + password);
+                    } else {
+                        showMessageDialog(loginFrame, "Les mots de passe ne correspondent pas!", "Erreur",
+                                JOptionPane.ERROR_MESSAGE, screenSize);
+                    }
+                });
+
                 registerCheckBox.addActionListener(e -> {
                     if (registerCheckBox.isSelected()) {
                         loginButton.setText("S'enregister");
@@ -111,32 +139,38 @@ public class ClientApp {
                 loginFrame.setLocationRelativeTo(null);
                 loginFrame.setVisible(true);
 
-                new Thread(() -> {
-                    try {
-                        String message;
-                        boolean running = true;
-                        while (running && ((message = client.receive()) != null)) {
-                            if (message.startsWith("LOGIN SUCCESS")) {
-                                loginFrame.setVisible(false);
-                                createChatWindow(client);
-                                identifiant = userField.getText();
-                                running = false;
-                            } else if (message.startsWith("LOGIN FAILURE")) {
-                                showMessageDialog(loginFrame, "Les informations de connexion sont incorrectes!",
-                                        "Erreur", JOptionPane.ERROR_MESSAGE, screenSize);
-                            } else if (message.startsWith("REGISTER SUCCESS")) {
-                                showMessageDialog(loginFrame, "Utilisateur ajouté avec succès!", "Confirmation",
-                                        JOptionPane.INFORMATION_MESSAGE, screenSize);
-                            } else if (message.startsWith("REGISTER FAILURE - USERNAME ALREADY EXISTS")) {
-                                showMessageDialog(loginFrame, "Ce nom d'utilisateur est déjà pris !", "Erreur",
-                                        JOptionPane.ERROR_MESSAGE, screenSize);
-                            } else if (message.startsWith("REGISTER FAILURE")) {
-                                showMessageDialog(loginFrame, "Erreur lors de l'ajout de l'utilisateur!", "Erreur",
-                                        JOptionPane.ERROR_MESSAGE, screenSize);
+                new Thread(new Runnable() {
+                    @Override
+                    public void run() {
+                        try {
+                            String message;
+                            boolean running = true;
+                            while (running && ((message = client.receive()) != null)) {
+                                if (message.startsWith("LOGIN SUCCESS")) {
+                                    loginFrame.setVisible(false);
+                                    createChatWindow(client);
+                                    identifiant = userField.getText();
+                                    running = false;
+                                } else if (message.startsWith("LOGIN FAILURE - USER ALREADY CONNECTED")) {
+                                    showMessageDialog(loginFrame, "L'utilisateur est déjà connecté!",
+                                            "Erreur", JOptionPane.ERROR_MESSAGE, screenSize);
+                                } else if (message.startsWith("LOGIN FAILURE")) {
+                                    showMessageDialog(loginFrame, "Les informations de connexion sont incorrectes!",
+                                            "Erreur", JOptionPane.ERROR_MESSAGE, screenSize);
+                                } else if (message.startsWith("REGISTER SUCCESS")) {
+                                    showMessageDialog(loginFrame, "Utilisateur ajouté avec succès!", "Confirmation",
+                                            JOptionPane.INFORMATION_MESSAGE, screenSize);
+                                } else if (message.startsWith("REGISTER FAILURE - USERNAME ALREADY EXISTS")) {
+                                    showMessageDialog(loginFrame, "Ce nom d'utilisateur est déjà pris !", "Erreur",
+                                            JOptionPane.ERROR_MESSAGE, screenSize);
+                                } else if (message.startsWith("REGISTER FAILURE")) {
+                                    showMessageDialog(loginFrame, "Erreur lors de l'ajout de l'utilisateur!", "Erreur",
+                                            JOptionPane.ERROR_MESSAGE, screenSize);
+                                }
                             }
+                        } catch (IOException e) {
+                            e.printStackTrace();
                         }
-                    } catch (IOException e) {
-                        e.printStackTrace();
                     }
                 }).start();
 
@@ -152,7 +186,7 @@ public class ClientApp {
 
         JFrame frame = new JFrame("Chat");
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        frame.setSize(screenSize.width / 2, screenSize.height / 2);
+        frame.setSize((screenSize.width * 2) / 3, screenSize.height / 2);
         frame.setMinimumSize(new Dimension(screenSize.width / 4, screenSize.height / 4));
         frame.setLocationRelativeTo(null);
         frame.setTitle("Chat - Général");
@@ -191,8 +225,6 @@ public class ClientApp {
         // Rendre la fenêtre visible après avoir ajouté tous les composants
         frame.setVisible(true);
 
-        messageArea.append("Bienvenue! Pour voir les commandes disponibles, tapez /help.\n\n");
-
         new Thread(() -> {
             try {
                 String message;
@@ -208,14 +240,30 @@ public class ClientApp {
                                 usersArea.append(user + "\n");
                             }
                         });
+                    } else if (finalMessage.startsWith("RESET")) {
+                        messageArea.setText(""); // Effacer la zone de message
                     } else if (finalMessage.startsWith("JOINED ROOM ")) {
                         SwingUtilities.invokeLater(() -> {
                             frame.setTitle("Chat - " + finalMessage.substring(12));
-                            messageArea.append("Vous avez rejoint le salon " + finalMessage.substring(12) + "\n\n");
+                            messageArea
+                                    .append("\n\n-- Vous avez rejoint le salon " + finalMessage.substring(12)
+                                            + " --\n\n");
+                            messageArea.setCaretPosition(messageArea.getDocument().getLength());
                         });
+                    } else if (finalMessage.startsWith("ROOM DELETED ")) {
+                        String deletedRoom = finalMessage.substring("ROOM DELETED ".length());
+                        SwingUtilities.invokeLater(() -> {
+
+                            frame.setTitle("Chat - Général");
+                            messageArea.append("\n\n-- Le salon " + deletedRoom
+                                    + " a été supprimé. Vous avez été déplacé vers le salon général --\n\n");
+                            messageArea.setCaretPosition(messageArea.getDocument().getLength());
+                        });
+
                     } else {
                         System.out.println("Received message: " + message);
                         messageArea.append(message + "\n");
+                        messageArea.setCaretPosition(messageArea.getDocument().getLength());
                     }
 
                 }

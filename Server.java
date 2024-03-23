@@ -14,7 +14,6 @@ import org.mindrot.jbcrypt.BCrypt;
 class ChatRoom {
     private String name;
     private List<PrintWriter> clients;
-    // Ajoutez d'autres attributs si nécessaire
 
     public ChatRoom(String name) {
         this.name = name;
@@ -40,6 +39,18 @@ public class Server {
     private Map<PrintWriter, ChatRoom> clientRooms = new HashMap<>();
     private Map<String, ChatRoom> rooms = new HashMap<>();
 
+    public boolean connect(String username) {
+        boolean connected = false;
+
+        for (PrintWriter writer : clientWriters) {
+            if (clientUsers.get(writer) != null && clientUsers.get(writer).equals(username)) {
+                connected = true;
+                break;
+            }
+        }
+        return connected;
+    }
+
     public Server(int port, String dbUrl, String dbUser, String dbPassword) throws IOException, SQLException {
         serverSocket = new ServerSocket(port);
         connection = DriverManager.getConnection(dbUrl, dbUser, dbPassword);
@@ -63,6 +74,7 @@ public class Server {
 
         while (true) {
             Socket clientSocket = serverSocket.accept();
+
             PrintWriter out = new PrintWriter(clientSocket.getOutputStream(), true);
 
             // Ajouter le client au salon "général"
@@ -78,8 +90,6 @@ public class Server {
             new Thread(() -> {
                 while (true) {
                     try {
-                        Thread.sleep(5000); // Attendre 5 secondes
-
                         String usersMessage = "CONNECTED USERS:";
                         for (String user : clientUsers.values()) {
                             usersMessage += ", " + user;
@@ -88,6 +98,8 @@ public class Server {
                         for (PrintWriter writer : clientWriters) {
                             writer.println(usersMessage);
                         }
+                        Thread.sleep(5000); // Attendre 5 secondes
+
                     } catch (InterruptedException e) {
                         e.printStackTrace();
                     }
@@ -112,10 +124,34 @@ public class Server {
                         stmt.setString(1, username);
                         try (ResultSet rs = stmt.executeQuery()) {
                             if (rs.next() && BCrypt.checkpw(password, rs.getString("password"))) {
-                                out.println("LOGIN SUCCESS");
-                                clientUsers.put(out, username);
+
+                                if (!connect(username)) {
+
+                                    out.println("LOGIN SUCCESS");
+                                    clientUsers.put(out, username);
+                                    System.out.println("Client connecté avec succès : " + username);
+
+                                    // Envoyer l'historique des messages du salon "général" au client
+                                    try (PreparedStatement stmt2 = connection.prepareStatement(
+                                            "SELECT * FROM messages WHERE channel_id = ? ORDER BY timestamp DESC LIMIT 50")) {
+                                        stmt2.setInt(1, 1); // ID du salon "général"
+                                        try (ResultSet rs2 = stmt2.executeQuery()) {
+                                            while (rs2.next()) {
+                                                out.println(
+                                                        rs2.getString("message"));
+                                            }
+                                            out.println(
+                                                    "\n\n-- Bienvenue! Pour voir les commandes disponibles, tapez /help --\n\n");
+                                        }
+                                    }
+                                } else {
+                                    out.println("LOGIN FAILURE - USER ALREADY CONNECTED");
+                                    System.out.println("La connexion a échoué pour le client : " + username);
+                                }
                             } else {
                                 out.println("LOGIN FAILURE");
+                                System.out.println("La connexion a échoué pour le client : " + username);
+
                             }
                         }
                     }
@@ -165,11 +201,52 @@ public class Server {
                         stmt.setString(1, roomName);
                         try (ResultSet rs = stmt.executeQuery()) {
                             if (rs.next()) {
+                                int channelId = rs.getInt("id"); // Récupérer l'ID du salon
+
+                                // Supprimer tous les messages du salon
+                                String sql = "DELETE FROM messages WHERE channel_id = ?";
+                                try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
+                                    pstmt.setInt(1, channelId);
+                                    pstmt.executeUpdate();
+                                }
+
                                 try (PreparedStatement stmt2 = connection.prepareStatement(
                                         "DELETE FROM channels WHERE name = ?")) {
                                     stmt2.setString(1, roomName);
                                     stmt2.executeUpdate();
                                     out.println("Le salon " + roomName + " a été supprimé.");
+
+                                    // Déplacer les clients vers le salon "général" ou les déconnecter
+                                    ChatRoom deletedRoom = rooms.get(roomName);
+                                    if (deletedRoom != null) {
+                                        for (PrintWriter client : deletedRoom.getClients()) {
+                                            // Récupérer le salon "général" de la base de données
+                                            ChatRoom generalRoom = rooms.get("général");
+                                            if (generalRoom != null) {
+                                                // Pour déplacer les clients vers le salon "général"
+                                                generalRoom.getClients().add(client);
+                                                clientRooms.put(client, generalRoom);
+
+                                                client.println("RESET");
+
+                                                // Envoyer l'historique des messages dans le général aux clients
+                                                try (PreparedStatement stmt3 = connection.prepareStatement(
+                                                        "SELECT * FROM messages WHERE channel_id = ? ORDER BY timestamp DESC LIMIT 50")) {
+                                                    stmt3.setInt(1, 1); // ID du salon "général"
+                                                    try (ResultSet rs3 = stmt3.executeQuery()) {
+                                                        while (rs3.next()) {
+                                                            client.println(
+                                                                    rs3.getString("message"));
+                                                        }
+                                                    }
+                                                }
+
+                                                client.println("ROOM DELETED ");
+
+                                            }
+                                        }
+                                    }
+
                                 }
                             } else {
                                 out.println("Le salon " + roomName + " n'existe pas.");
@@ -178,6 +255,7 @@ public class Server {
                     } catch (SQLException e) {
                         e.printStackTrace();
                     }
+
                 } else if (inputLine.matches(".*/list_channels.*")) {
                     try (PreparedStatement stmt = connection.prepareStatement(
                             "SELECT * FROM channels")) {
@@ -192,56 +270,71 @@ public class Server {
                 } else if (inputLine.matches(".*\\/join.*") || inputLine.matches(".*\\/JOIN.*")) {
                     String roomName = parts[3];
 
-                    // Vérifier si le salon existe dans la base de données
+                    boolean roomExists = false;
                     try (PreparedStatement stmt = connection.prepareStatement(
                             "SELECT * FROM channels WHERE name = ?")) {
                         stmt.setString(1, roomName);
                         try (ResultSet rs = stmt.executeQuery()) {
                             if (rs.next()) {
-                                // Retirer le client de son salon actuel
-                                ChatRoom currentRoom = clientRooms.get(out);
-                                currentRoom.getClients().remove(out);
-
-                                // Ajouter le client au nouveau salon
-                                ChatRoom newRoom = rooms.get(roomName);
-                                newRoom.getClients().add(out);
-                                clientRooms.put(out, newRoom);
-
-                                out.println("JOINED ROOM " + roomName);
-
-                                // Récupérer l'ID du canal à partir de son nom
-                                int channelId = -1;
-                                try (PreparedStatement stmt2 = connection.prepareStatement(
-                                        "SELECT id FROM channels WHERE name = ?")) {
-                                    stmt2.setString(1, roomName);
-                                    try (ResultSet rs2 = stmt.executeQuery()) {
-                                        if (rs2.next()) {
-                                            channelId = rs.getInt("id");
-                                        }
-                                    }
-                                }
-
-                                // Envoyer l'historique des messages du salon
-                                if (channelId != -1) {
-                                    try (PreparedStatement stmt3 = connection.prepareStatement(
-                                            "SELECT * FROM messages WHERE channel_id = ? ORDER BY timestamp")) {
-                                        stmt3.setInt(1, channelId);
-                                        try (ResultSet rs3 = stmt3.executeQuery()) {
-                                            while (rs3.next()) {
-                                                out.println(
-                                                        rs3.getString("username") + ": " + rs3.getString("message"));
-                                            }
-                                        }
-                                    }
-                                }
-
-                            } else {
-                                out.println("Le salon " + roomName + " n'existe pas.");
+                                roomExists = true;
                             }
                         }
-                    } catch (SQLException e) {
-                        e.printStackTrace();
                     }
+
+                    if (roomExists) {
+                        // Retirer le client de son salon actuel
+                        // Avant de retirer le client de son salon actuel, vérifier si le salon est null
+                        ChatRoom currentRoom = clientRooms.get(out);
+                        if (currentRoom != null) {
+                            currentRoom.getClients().remove(out);
+                        }
+
+                        // clientRooms.remove(out);
+                        // clientUsers.remove(out);
+
+                        // Ajouter le client au nouveau salon
+                        ChatRoom newRoom = rooms.get(roomName);
+                        if (newRoom == null) {
+                            newRoom = new ChatRoom(roomName);
+                            rooms.put(roomName, newRoom);
+                        }
+                        newRoom.getClients().add(out);
+                        clientRooms.put(out, newRoom);
+
+                        // Récupérer l'ID du canal à partir de son nom
+                        int channelId = -1;
+                        try (PreparedStatement stmt2 = connection.prepareStatement(
+                                "SELECT id FROM channels WHERE name = ?")) {
+                            stmt2.setString(1, roomName);
+                            try (ResultSet rs2 = stmt2.executeQuery()) {
+                                if (rs2.next()) {
+                                    channelId = rs2.getInt("id");
+                                }
+                            }
+                        }
+
+                        out.println("RESET");
+
+                        // Envoyer l'historique des messages du salon
+                        if (channelId != -1) {
+                            try (PreparedStatement stmt3 = connection.prepareStatement(
+                                    "SELECT * FROM messages WHERE channel_id = ? ORDER BY timestamp DESC LIMIT 50")) {
+                                stmt3.setInt(1, channelId);
+                                try (ResultSet rs3 = stmt3.executeQuery()) {
+                                    while (rs3.next()) {
+                                        out.println(
+                                                rs3.getString("message"));
+                                    }
+                                }
+                            }
+                        }
+
+                        out.println("JOINED ROOM " + roomName);
+
+                    } else {
+                        out.println("Le salon " + roomName + " n'existe pas.");
+                    }
+
                 } else if (inputLine.matches(".*\\s/NB_USERS.*") || inputLine.matches(".*\\s/nb_users.*")) {
                     out.println(clientUsers.size() + " UTILISATEURS CONNECTÉ(S)");
                 } else {
@@ -291,12 +384,14 @@ public class Server {
                     }
                 }
             }
+
         } catch (IOException | SQLException e) {
             e.printStackTrace();
         } finally {
             // Retirer le client de son salon actuel
             ChatRoom currentRoom = clientRooms.get(out);
             currentRoom.getClients().remove(out);
+            System.out.println("Client déconnecté : " + clientUsers.get(out));
 
             clientRooms.remove(out);
             clientUsers.remove(out);
