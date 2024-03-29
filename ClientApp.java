@@ -58,13 +58,22 @@ public class ClientApp {
                 passwordConfirmLabel.setVisible(false);
                 passwordConfirmField.setVisible(false);
 
-                JCheckBox registerCheckBox = new JCheckBox("Nouveau compte");
+                JToggleButton registerCheckBox = new JToggleButton("Nouveau compte");
+                registerCheckBox.setBackground(Color.GREEN);
                 registerCheckBox.setFont(new Font("SansSerif", Font.PLAIN, screenSize.height / 40));
                 registerCheckBox.addActionListener(e -> {
                     boolean selected = registerCheckBox.isSelected();
                     passwordConfirmLabel.setVisible(selected);
                     passwordConfirmField.setVisible(selected);
                     loginFrame.pack();
+                    if (selected) {
+                        registerCheckBox.setBackground(Color.RED);
+                        registerCheckBox.setOpaque(true);
+                    } else {
+                        registerCheckBox.setBackground(Color.GREEN);
+                        registerCheckBox.setOpaque(true);
+                    }
+
                 });
 
                 JButton loginButton = new JButton("Se connecter");
