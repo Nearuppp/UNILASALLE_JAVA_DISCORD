@@ -399,7 +399,7 @@ public class Server {
     }
 
     public static void main(String[] args) throws IOException, SQLException {
-        Server server = new Server(12345, "jdbc:mysql://localhost:3306/database", "root", "admin1234");
+        Server server = new Server(12345, "jdbc:mysql://localhost:3306/database", "root", "password");
         server.start();
     }
 }

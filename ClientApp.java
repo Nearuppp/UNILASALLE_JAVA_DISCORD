@@ -148,7 +148,7 @@ public class ClientApp {
                             while (running && ((message = client.receive()) != null)) {
                                 if (message.startsWith("LOGIN SUCCESS")) {
                                     loginFrame.setVisible(false);
-                                    createChatWindow(client);
+                                    createChatWindow(client, loginFrame);
                                     identifiant = userField.getText();
                                     running = false;
                                 } else if (message.startsWith("LOGIN FAILURE - USER ALREADY CONNECTED")) {
@@ -180,7 +180,7 @@ public class ClientApp {
         });
     }
 
-    private static void createChatWindow(Client client) {
+    private static void createChatWindow(Client client, JFrame loginFrame) {
         // Obtenir la taille de l'écran
         Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
 
@@ -224,6 +224,22 @@ public class ClientApp {
 
         // Rendre la fenêtre visible après avoir ajouté tous les composants
         frame.setVisible(true);
+
+        JButton disconnectButton = new JButton("Déconnexion");
+        disconnectButton.setFont(new Font("SansSerif", Font.PLAIN, screenSize.height / 40));
+        frame.add(disconnectButton, BorderLayout.NORTH);
+
+        disconnectButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                // 1. Disconnect the user from the server
+                client.send("DISCONNECT " + identifiant);
+
+                // 2. Close the chat window and return to the login page
+                frame.dispose(); // Close the chat window
+                loginFrame.setVisible(true); // Show the login page
+            }
+        });
 
         new Thread(() -> {
             try {
