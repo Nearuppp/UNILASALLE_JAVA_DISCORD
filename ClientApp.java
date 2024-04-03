@@ -46,6 +46,7 @@ public class ClientApp {
                 loginFrame.setMinimumSize(new Dimension(screenSize.width / 3, screenSize.height / 4));
 
                 JPanel panel = new JPanel(new GridLayout(6, 2));
+                panel.setBackground(Color.white);
 
                 JLabel userLabel = new JLabel("Identifiant");
                 userLabel.setFont(new Font("SansSerif", Font.PLAIN, screenSize.height / 40));
@@ -134,6 +135,53 @@ public class ClientApp {
                         loginButton.setText("Se connecter");
                     }
                 });
+                JButton buttonTheme = new JButton("Change color");
+                buttonTheme.addActionListener(new ActionListener() {
+                    public void actionPerformed(ActionEvent e) {
+                        // Check the panel's current background color
+                        if (panel.getBackground() == Color.white) {
+                            // If it's white, change it to black
+                            panel.setBackground(Color.black);
+                            // Change the button's text color to white and background to black
+                            buttonTheme.setForeground(Color.white);
+                            buttonTheme.setBackground(Color.black);
+                            loginButton.setForeground(Color.white);
+                            loginButton.setBackground(Color.black);
+                            // Change the JLabel's text color to white
+                            userLabel.setForeground(Color.white);
+                            passwordLabel.setForeground(Color.white);
+                            // Change the JTextField's text color to white and background to black
+                            userField.setForeground(Color.white);
+                            userField.setBackground(Color.black);
+                            passwordField.setForeground(Color.white);
+                            passwordField.setBackground(Color.black);
+                            passwordConfirmLabel.setForeground(Color.white);
+                            passwordConfirmLabel.setBackground(Color.black);
+                            passwordConfirmField.setForeground(Color.white);
+                            passwordConfirmField.setBackground(Color.black);
+                        } else {
+                            // If it's not white (i.e., it's black), change it to white
+                            panel.setBackground(Color.white);
+                            // Change the button's text color to black and background to white
+                            buttonTheme.setForeground(Color.black);
+                            buttonTheme.setBackground(Color.white);
+                            loginButton.setForeground(Color.black);
+                            loginButton.setBackground(Color.white);
+                            // Change the JLabel's text color to black
+                            userLabel.setForeground(Color.black);
+                            passwordLabel.setForeground(Color.black);
+                            // Change the JTextField's text color to black and background to white
+                            userField.setForeground(Color.black);
+                            userField.setBackground(Color.white);
+                            passwordField.setForeground(Color.black);
+                            passwordField.setBackground(Color.white);
+                            passwordConfirmLabel.setForeground(Color.black);
+                            passwordConfirmLabel.setBackground(Color.white);
+                            passwordConfirmField.setForeground(Color.black);
+                            passwordConfirmField.setBackground(Color.white);
+                        }
+                    }
+                });
 
                 panel.add(userLabel);
                 panel.add(userField);
@@ -141,7 +189,7 @@ public class ClientApp {
                 panel.add(passwordField);
                 panel.add(passwordConfirmLabel);
                 panel.add(passwordConfirmField);
-                panel.add(new JLabel());
+                panel.add(buttonTheme);
                 panel.add(new JLabel());
                 panel.add(new JLabel());
                 panel.add(new JLabel());
@@ -199,6 +247,8 @@ public class ClientApp {
         Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
 
         JFrame frame = new JFrame("Chat");
+        frame.setForeground(Color.black);
+        frame.setBackground(Color.white);
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         frame.setSize((screenSize.width * 2) / 3, screenSize.height / 2);
         frame.setMinimumSize(new Dimension(screenSize.width / 4, screenSize.height / 4));
@@ -260,9 +310,25 @@ public class ClientApp {
         // Rendre la fenêtre visible après avoir ajouté tous les composants
         frame.setVisible(true);
 
+        // Create a new panel with GridLayout
+        JPanel northPanel = new JPanel(new GridLayout(1, 2));
+
+        // Add the disconnectButton to the northPanel
         JButton disconnectButton = new JButton("Déconnexion");
         disconnectButton.setFont(new Font("SansSerif", Font.PLAIN, screenSize.height / 40));
-        frame.add(disconnectButton, BorderLayout.NORTH);
+        northPanel.add(disconnectButton);
+        disconnectButton.setForeground(Color.black);
+        disconnectButton.setBackground(Color.white);
+
+        // Add the buttonTheme to the northPanel
+        JButton buttonTheme = new JButton("Change color");
+        buttonTheme.setFont(new Font("SansSerif", Font.PLAIN, screenSize.height / 40));
+        northPanel.add(buttonTheme);
+        buttonTheme.setForeground(Color.black);
+        buttonTheme.setBackground(Color.white);
+
+        // Add the northPanel to the NORTH of the frame
+        frame.add(northPanel, BorderLayout.NORTH);
 
         disconnectButton.addActionListener((ActionListener) new ActionListener() {
             @Override
@@ -273,6 +339,55 @@ public class ClientApp {
                 // 2. Close the chat window and return to the login page
                 frame.dispose(); // Close the chat window
                 loginFrame.setVisible(true); // Show the login page
+            }
+        });
+
+        buttonTheme.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                // Check the panel's current background color
+                if (frame.getBackground() == Color.white) {
+                    disconnectButton.setForeground(Color.white);
+                    disconnectButton.setBackground(Color.black);
+
+                    buttonTheme.setForeground(Color.white);
+                    buttonTheme.setBackground(Color.black);
+
+                    messageArea.setForeground(Color.white);
+                    messageArea.setBackground(Color.black);
+
+                    textField.setForeground(Color.white);
+                    textField.setBackground(Color.black);
+
+                    usersArea.setForeground(Color.white);
+                    usersArea.setBackground(Color.black);
+
+                    channelsList.setForeground(Color.white);
+                    channelsList.setBackground(Color.black);
+                    // Change the chat window's text color to white and background to black
+                    frame.setForeground(Color.white);
+                    frame.setBackground(Color.black);
+                } else {
+                    disconnectButton.setForeground(Color.black);
+                    disconnectButton.setBackground(Color.white);
+
+                    buttonTheme.setForeground(Color.black);
+                    buttonTheme.setBackground(Color.white);
+
+                    messageArea.setForeground(Color.black);
+                    messageArea.setBackground(Color.white);
+
+                    textField.setForeground(Color.black);
+                    textField.setBackground(Color.white);
+
+                    usersArea.setForeground(Color.black);
+                    usersArea.setBackground(Color.white);
+
+                    channelsList.setForeground(Color.black);
+                    channelsList.setBackground(Color.white);
+                    // Change the chat window's text color to black and background to white
+                    frame.setForeground(Color.black);
+                    frame.setBackground(Color.white);
+                }
             }
         });
 
