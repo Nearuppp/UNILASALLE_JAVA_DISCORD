@@ -238,11 +238,11 @@ public class ClientApp {
         disconnectButton.setFont(new Font("SansSerif", Font.PLAIN, screenSize.height / 40));
         frame.add(disconnectButton, BorderLayout.NORTH);
 
-        disconnectButton.addActionListener(new ActionListener() {
+        disconnectButton.addActionListener((ActionListener) new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
                 // 1. Disconnect the user from the server
-                client.send("DISCONNECT " + identifiant);
+                client.send("DISCONNECT");
 
                 // 2. Close the chat window and return to the login page
                 frame.dispose(); // Close the chat window

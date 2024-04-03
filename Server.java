@@ -98,6 +98,7 @@ public class Server {
                         for (PrintWriter writer : clientWriters) {
                             writer.println(usersMessage);
                         }
+
                         Thread.sleep(5000); // Attendre 5 secondes
 
                     } catch (InterruptedException e) {
@@ -114,9 +115,16 @@ public class Server {
 
             String inputLine;
             while ((inputLine = in.readLine()) != null) {
+
                 String[] parts = inputLine.split(" ");
-                String username = parts[1];
-                String password = parts[2];
+                String username;
+                String password;
+                if (parts.length < 3) {
+                    continue;
+                } else {
+                    username = parts[1];
+                    password = parts[2];
+                }
 
                 if (inputLine.startsWith("LOGIN")) {
                     try (PreparedStatement stmt = connection.prepareStatement(
@@ -167,6 +175,16 @@ public class Server {
                     } catch (SQLException e) {
                         out.println("REGISTER FAILURE");
                     }
+                } else if (inputLine.startsWith("DISCONNECT")) {
+                    // Retirer le client de son salon actuel
+                    System.out.println("je suis là\n");
+                    ChatRoom currentRoom = clientRooms.get(out);
+                    currentRoom.getClients().remove(out);
+                    System.out.println("Client déconnecté : " + clientUsers.get(out));
+
+                    clientRooms.remove(out);
+                    clientUsers.remove(out);
+
                 } else if (inputLine.matches(".*\\s/HELP.*") || inputLine.matches(".*\\s/help.*")) {
                     out.println("Commandes disponibles : \n/nb_users : Affiche le nombre d'utilisateurs connectés\n");
 
@@ -289,9 +307,6 @@ public class Server {
                             currentRoom.getClients().remove(out);
                         }
 
-                        // clientRooms.remove(out);
-                        // clientUsers.remove(out);
-
                         // Ajouter le client au nouveau salon
                         ChatRoom newRoom = rooms.get(roomName);
                         if (newRoom == null) {
@@ -337,6 +352,7 @@ public class Server {
 
                 } else if (inputLine.matches(".*\\s/NB_USERS.*") || inputLine.matches(".*\\s/nb_users.*")) {
                     out.println(clientUsers.size() + " UTILISATEURS CONNECTÉ(S)");
+
                 } else {
                     System.out.println("Received message: " + inputLine);
 
@@ -383,6 +399,7 @@ public class Server {
                         writer.println(inputLine);
                     }
                 }
+
             }
 
         } catch (IOException | SQLException e) {
@@ -399,7 +416,7 @@ public class Server {
     }
 
     public static void main(String[] args) throws IOException, SQLException {
-        Server server = new Server(12345, "jdbc:mysql://localhost:3306/database", "root", "password");
+        Server server = new Server(12345, "jdbc:mysql://localhost:3306/database", "root", "admin1234");
         server.start();
     }
 }
