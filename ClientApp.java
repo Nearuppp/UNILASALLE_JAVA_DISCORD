@@ -1,10 +1,15 @@
 
 import javax.swing.*;
+
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.MouseAdapter;
 import java.util.Arrays;
 import java.io.*;
+
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseListener;
 
 public class ClientApp {
 
@@ -217,10 +222,31 @@ public class ClientApp {
         usersArea.setFont(new Font("SansSerif", Font.PLAIN, screenSize.height / 60));
         frame.add(new JScrollPane(usersArea), BorderLayout.EAST);
 
+        // Remplacez JTextArea par JList et DefaultListModel
+        DefaultListModel<String> channelsModel = new DefaultListModel<>();
+        JList<String> channelsList = new JList<>(channelsModel);
+        channelsList.setFont(new Font("SansSerif", Font.PLAIN, screenSize.height / 60));
+
+        // Ajoutez un MouseListener à channelsList
+        channelsList.addMouseListener((MouseListener) new MouseAdapter() {
+            public void mouseClicked(MouseEvent evt) {
+                int index = channelsList.locationToIndex(evt.getPoint());
+                System.out.println("bonjour");
+                client.send("/JOIN " + channelsModel.getElementAt(index));
+                if (evt.getClickCount() == 2) { // Double-click detected
+                }
+            }
+        });
+
         // Définir la taille préférée pour le JScrollPane
         JScrollPane usersScrollPane = new JScrollPane(usersArea);
         usersScrollPane.setPreferredSize(new Dimension(screenSize.width / 8, screenSize.height / 2));
         frame.add(usersScrollPane, BorderLayout.EAST);
+
+        // Définir la taille préférée pour le channelslist
+        JScrollPane channelsScrollPane = new JScrollPane(channelsList);
+        channelsScrollPane.setPreferredSize(new Dimension(screenSize.width / 8, screenSize.height / 2));
+        frame.add(channelsScrollPane, BorderLayout.WEST);
 
         // Envoyer le message lorsque l'utilisateur appuie sur Entrée
         textField.addActionListener((ActionListener) new ActionListener() {
@@ -265,7 +291,19 @@ public class ClientApp {
                                 usersArea.append(user + "\n");
                             }
                         });
-                    } else if (finalMessage.startsWith("RESET")) {
+                    }
+
+                    else if (finalMessage.startsWith("AVAILABLE ROOMS:")) {
+                        SwingUtilities.invokeLater(() -> {
+                            channelsModel.clear();
+                            String[] channels = finalMessage.substring("AVAILABLE ROOMS:".length()).split(", ");
+                            for (String channel : channels) {
+                                channelsModel.addElement(channel);
+                            }
+                        });
+                    }
+
+                    else if (finalMessage.startsWith("RESET")) {
                         messageArea.setText(""); // Effacer la zone de message
                     } else if (finalMessage.startsWith("JOINED ROOM ")) {
                         SwingUtilities.invokeLater(() -> {

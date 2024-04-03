@@ -86,7 +86,8 @@ public class Server {
 
             new Thread(() -> handleClient(clientSocket, out)).start();
 
-            // Envoyer la liste des utilisateurs connectés à intervalles réguliers
+            // Envoyer la liste des utilisateurs connectés et des salons disponibles à
+            // intervalles réguliers
             new Thread(() -> {
                 while (true) {
                     try {
@@ -97,6 +98,22 @@ public class Server {
 
                         for (PrintWriter writer : clientWriters) {
                             writer.println(usersMessage);
+                        }
+
+                        String roomsMessage = "AVAILABLE ROOMS:";
+                        try (PreparedStatement stmt = connection.prepareStatement(
+                                "SELECT * FROM channels")) {
+                            try (ResultSet rs = stmt.executeQuery()) {
+                                while (rs.next()) {
+                                    roomsMessage += ", " + rs.getString("name");
+                                }
+                            }
+                        } catch (SQLException e) {
+                            e.printStackTrace();
+                        }
+
+                        for (PrintWriter writer : clientWriters) {
+                            writer.println(roomsMessage);
                         }
 
                         Thread.sleep(5000); // Attendre 5 secondes
