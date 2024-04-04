@@ -11,6 +11,14 @@ import java.io.*;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 
+import org.json.JSONObject;
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.net.HttpURLConnection;
+import java.net.URL;
+import java.awt.event.*;
+
 public class ClientApp {
 
     static String identifiant;
@@ -329,7 +337,64 @@ public class ClientApp {
 
         // Add the northPanel to the NORTH of the frame
         frame.add(northPanel, BorderLayout.NORTH);
+        // Create the drop-down menu
+        String[] cities = { "New York", "London", "Paris", "Tokyo", "Sydney" };
+        JComboBox<String> cityDropDown = new JComboBox<>(cities);
+        cityDropDown.setForeground(Color.black);
+        cityDropDown.setBackground(Color.white);
+        cityDropDown.setSelectedIndex(0); // Set the default selected city
 
+        // Add action listener to the drop-down menu
+        cityDropDown.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                String apiKey = "36019f91e01af9ac650c64c217110c4c";
+                // Get the selected city
+                String selectedCity = (String) cityDropDown.getSelectedItem();
+                // Print the selected city
+                System.out.println("Selected City: " + selectedCity);
+
+                String apiUrl = "http://api.openweathermap.org/data/2.5/weather?q=" + selectedCity + "&appid=" + apiKey;
+
+                try {
+                    URL url = new URL(apiUrl);
+                    HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+                    connection.setRequestMethod("GET");
+
+                    BufferedReader in = new BufferedReader(new InputStreamReader(connection.getInputStream()));
+                    String inputLine;
+                    StringBuilder response = new StringBuilder();
+
+                    while ((inputLine = in.readLine()) != null) {
+                        response.append(inputLine);
+                    }
+                    in.close();
+
+                    JSONObject jsonResponse = new JSONObject(response.toString());
+                    JSONObject main = jsonResponse.getJSONObject("main");
+                    double temperatureKelvin = main.getDouble("temp");
+
+                    // Convert temperature from Kelvin to Celsius
+                    int temperatureCelsius = (int) (temperatureKelvin - 273.15);
+
+                    double humidity = main.getDouble("humidity");
+
+                    System.out.println("Temperature: " + temperatureCelsius + " Celsius");
+                    System.out.println("Humidity: " + humidity + "%");
+                    SwingUtilities.invokeLater(() -> {
+                        messageArea.append("\n\n-- Ville selectionne : " + selectedCity + "\nTemperature: "
+                                + temperatureCelsius + " Celsius\n" + "Humidity: " + humidity + "\n\n");
+                        messageArea.setCaretPosition(messageArea.getDocument().getLength());
+                    });
+
+                } catch (IOException j) {
+                    j.printStackTrace();
+                }
+
+            }
+        });
+
+        // Add the drop-down menu to the northPanel
+        northPanel.add(cityDropDown);
         disconnectButton.addActionListener((ActionListener) new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
@@ -348,6 +413,9 @@ public class ClientApp {
                 if (frame.getBackground() == Color.white) {
                     disconnectButton.setForeground(Color.white);
                     disconnectButton.setBackground(Color.black);
+
+                    cityDropDown.setForeground(Color.white);
+                    cityDropDown.setBackground(Color.black);
 
                     buttonTheme.setForeground(Color.white);
                     buttonTheme.setBackground(Color.black);
@@ -369,6 +437,9 @@ public class ClientApp {
                 } else {
                     disconnectButton.setForeground(Color.black);
                     disconnectButton.setBackground(Color.white);
+
+                    cityDropDown.setForeground(Color.black);
+                    cityDropDown.setBackground(Color.white);
 
                     buttonTheme.setForeground(Color.black);
                     buttonTheme.setBackground(Color.white);
