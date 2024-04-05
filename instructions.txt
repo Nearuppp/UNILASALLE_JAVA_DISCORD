@@ -1,14 +1,14 @@
-sudo systemctl start mysqld 
---- modifier l'ip dans le programme ---
+- sudo systemctl start mysqld 
+- modifier l'ip dans le programme 
 
-javac -cp .:lib/jbcrypt-0.4.jar:lib/mysql-connector-j-8.3.0.jar *.java
-java -cp .:lib/jbcrypt-0.4.jar:lib/mysql-connector-j-8.3.0.jar Server
-java -cp .:lib/jbcrypt-0.4.jar:lib/mysql-connector-j-8.3.0.jar ClientApp
 
-javac -cp .;lib/jbcrypt-0.4.jar;lib/mysql-connector-j-8.3.0.jar *.java
-java -cp .;lib/jbcrypt-0.4.jar;lib/mysql-connector-j-8.3.0.jar Server
-java -cp .;lib/jbcrypt-0.4.jar;lib/mysql-connector-j-8.3.0.jar ClientApp
+--- LINUX --- 
+javac -cp .:lib/jbcrypt-0.4.jar:lib/mysql-connector-j-8.3.0.jar:lib/json.jar *.java
+java -cp .:lib/jbcrypt-0.4.jar:lib/mysql-connector-j-8.3.0.jar:lib/json.jar Server
+java -cp .:lib/jbcrypt-0.4.jar:lib/mysql-connector-j-8.3.0.jar:lib/json.jar ClientApp
 
-javac -cp .;lib/jbcrypt-0.4.jar;lib/mysql-connector-j-8.3.0.jar;json-java.jar *.java
-java -cp .;lib/jbcrypt-0.4.jar;lib/mysql-connector-j-8.3.0.jar;json-java.jar ClientApp
 
+--- WINDOWS --- 
+javac -cp .;lib/jbcrypt-0.4.jar;lib/mysql-connector-j-8.3.0.jar;lib/json.jar *.java
+java -cp .;lib/jbcrypt-0.4.jar;lib/mysql-connector-j-8.3.0.jar;lib/json.jar Server
+java -cp .;lib/jbcrypt-0.4.jar;lib/mysql-connector-j-8.3.0.jar;lib/json.jar ClientAPP

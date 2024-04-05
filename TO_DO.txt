@@ -2,15 +2,19 @@
 - Login / mots de passe chiffrés / 
 - ne pas pouvoir créer deux utilisateur avec le même nom / 
 - afficher la liste des hotes connectés /
+- afficher la liste des salons disponibles /
+- Pouvoir rejoindre un salon directement en cliquant dessus /
 - commande pour afficher le nombre d'hotes connectés au serveur /
-- se rendre dans différents salons / 
 - pouvoir créer et supprimer les salons s'il on est admin / 
 - historique des messages /
 - ne pas pouvoir se connecter avec un utiilsateur s'il est déjà connecté / 
 - mettre les gens dans le channel par défaut si on supprime le channel dans lequel des gens se trouvent /
+- Theme clair sombre / 
+- Bouton de déconnexion / 
+-
+-
 
-
-- pouvoir envoyer un message privé 
 - créer un compte guest 
-- pouvoir s'appeler
+- pouvoir envoyer un message privé 
 - pouvoir ban un utilisateur
+- pouvoir s'appeler
