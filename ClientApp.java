@@ -17,6 +17,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.nio.file.Path;
 import java.awt.event.*;
 
 public class ClientApp {
@@ -288,10 +289,9 @@ public class ClientApp {
         // Ajoutez un MouseListener à channelsList
         channelsList.addMouseListener((MouseListener) new MouseAdapter() {
             public void mouseClicked(MouseEvent evt) {
-                int index = channelsList.locationToIndex(evt.getPoint());
-                System.out.println("bonjour");
-                client.send("/JOIN " + channelsModel.getElementAt(index));
                 if (evt.getClickCount() == 2) { // Double-click detected
+                    int index = channelsList.locationToIndex(evt.getPoint());
+                    client.send("/JOIN " + channelsModel.getElementAt(index));
                 }
             }
         });
@@ -403,7 +403,18 @@ public class ClientApp {
 
                 // 2. Close the chat window and return to the login page
                 frame.dispose(); // Close the chat window
-                loginFrame.setVisible(true); // Show the login page
+
+                try {
+                    String javaBin = Path.of(System.getProperty("java.home"), "bin", "java").toString();
+                    String classpath = System.getProperty("java.class.path");
+                    String className = ClientApp.class.getName();
+
+                    ProcessBuilder builder = new ProcessBuilder(javaBin, "-cp", classpath, className);
+                    builder.start();
+                } catch (IOException ex) {
+                    ex.printStackTrace();
+                }
+
             }
         });
 

@@ -137,7 +137,8 @@ public class Server {
                 String username;
                 String password;
                 if (parts.length < 3) {
-                    continue;
+                    username = "";
+                    password = "";
                 } else {
                     username = parts[1];
                     password = parts[2];
@@ -194,7 +195,6 @@ public class Server {
                     }
                 } else if (inputLine.startsWith("DISCONNECT")) {
                     // Retirer le client de son salon actuel
-                    System.out.println("je suis là\n");
                     ChatRoom currentRoom = clientRooms.get(out);
                     currentRoom.getClients().remove(out);
                     System.out.println("Client déconnecté : " + clientUsers.get(out));
@@ -302,8 +302,8 @@ public class Server {
                     } catch (SQLException e) {
                         e.printStackTrace();
                     }
-                } else if (inputLine.matches(".*\\/join.*") || inputLine.matches(".*\\/JOIN.*")) {
-                    String roomName = parts[3];
+                } else if ((inputLine.startsWith("/JOIN"))) {
+                    String roomName = parts[1];
 
                     boolean roomExists = false;
                     try (PreparedStatement stmt = connection.prepareStatement(
@@ -424,7 +424,10 @@ public class Server {
         } finally {
             // Retirer le client de son salon actuel
             ChatRoom currentRoom = clientRooms.get(out);
-            currentRoom.getClients().remove(out);
+            if (currentRoom != null) {
+                currentRoom.getClients().remove(out);
+            }
+
             System.out.println("Client déconnecté : " + clientUsers.get(out));
 
             clientRooms.remove(out);
@@ -433,7 +436,7 @@ public class Server {
     }
 
     public static void main(String[] args) throws IOException, SQLException {
-        Server server = new Server(12345, "jdbc:mysql://localhost:3306/database", "root", "password");
+        Server server = new Server(12345, "jdbc:mysql://localhost:3306/database", "root", "admin1234");
         server.start();
     }
 }
