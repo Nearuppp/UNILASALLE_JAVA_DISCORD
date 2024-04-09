@@ -304,7 +304,7 @@ public class ClientApp {
                 if (evt.getClickCount() == 2) { // Double-click detected
                     int index = usersList.locationToIndex(evt.getPoint());
                     clickedUser = usersModel.getElementAt(index);
-                    System.out.println("test");
+                    privateChatArea.setText(""); // Effacer la zone de message
                     client.send("/pm_history " + clickedUser);
 
                     privateChatField.addActionListener(new ActionListener() {

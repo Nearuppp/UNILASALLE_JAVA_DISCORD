@@ -143,6 +143,22 @@ public class Server {
         }
     }
 
+    private String getUsername(int userId) {
+        String username = null;
+        try (PreparedStatement stmt = connection.prepareStatement(
+                "SELECT username FROM users WHERE id = ?")) {
+            stmt.setInt(1, userId);
+            try (ResultSet rs = stmt.executeQuery()) {
+                if (rs.next()) {
+                    username = rs.getString("username");
+                }
+            }
+        } catch (SQLException e) {
+            System.out.println("ERROR - COULD NOT RETRIEVE USERNAME");
+        }
+        return username;
+    }
+
     private void handleClient(Socket clientSocket, PrintWriter out) {
         try (BufferedReader in = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()))) {
 
@@ -238,7 +254,9 @@ public class Server {
                         try (ResultSet rs = stmt.executeQuery()) {
                             while (rs.next()) {
                                 String message = rs.getString("message");
-                                out.println("PM_HISTORY " + message);
+                                int senderId = rs.getInt("sender_id");
+                                String senderName = getUsername(senderId);
+                                out.println("PM_HISTORY " + senderName + ": " + message);
                             }
                         }
                     } catch (SQLException e) {
