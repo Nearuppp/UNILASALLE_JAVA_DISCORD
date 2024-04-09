@@ -239,13 +239,44 @@ public class Server {
                             while (rs.next()) {
                                 String message = rs.getString("message");
                                 out.println("PM_HISTORY " + message);
-                                System.out.println("PM_HISTORY " + message);
                             }
                         }
                     } catch (SQLException e) {
                         out.println("ERROR - COULD NOT RETRIEVE PM HISTORY");
                     }
-                } else if (inputLine.matches("admin : /create .*")) {
+                } else if (inputLine.startsWith("/PM, ")) {
+                    String[] parts2 = inputLine.split(", ", 3);
+                    if (parts2.length < 3) {
+                        out.println("ERROR - INVALID PM FORMAT");
+                    } else {
+                        String recipientName = parts2[1];
+                        String message = parts2[2];
+
+                        // Récupérer l'ID de l'utilisateur à partir de son nom d'utilisateur
+                        int senderId = getUserId(clientUsers.get(out));
+                        int recipientId = getUserId(recipientName);
+
+                        // Ajouter le message privé à la base de données
+                        try (PreparedStatement stmt = connection.prepareStatement(
+                                "INSERT INTO private_messages (sender_id, receiver_id, message) VALUES (?, ?, ?)")) {
+                            stmt.setInt(1, senderId);
+                            stmt.setInt(2, recipientId);
+                            stmt.setString(3, message);
+                            stmt.executeUpdate();
+                        } catch (SQLException e) {
+                            e.printStackTrace();
+                        }
+
+                        // Envoyer le message au destinataire
+                        for (PrintWriter writer : clientWriters) {
+                            if (clientUsers.get(writer).equals(recipientName)) {
+                                writer.println("PM: " + clientUsers.get(out) + ": " + message);
+                            }
+                        }
+                    }
+                }
+
+                else if (inputLine.matches("admin : /create .*")) {
                     String roomName = parts[3];
 
                     // Vérifier si le salon existe dans la base de données

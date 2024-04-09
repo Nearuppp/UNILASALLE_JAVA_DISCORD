@@ -19,6 +19,7 @@ import java.nio.file.Path;
 public class ClientApp {
 
     static String identifiant;
+    private static String clickedUser;
 
     private static void showMessageDialog(Component parent, String message, String title, int messageType,
             Dimension screenSize) {
@@ -302,16 +303,19 @@ public class ClientApp {
             public void mouseClicked(MouseEvent evt) {
                 if (evt.getClickCount() == 2) { // Double-click detected
                     int index = usersList.locationToIndex(evt.getPoint());
-                    String clickedUser = usersModel.getElementAt(index);
+                    clickedUser = usersModel.getElementAt(index);
                     System.out.println("test");
                     client.send("/pm_history " + clickedUser);
 
-                    // Send the message when Enter is pressed
                     privateChatField.addActionListener(new ActionListener() {
                         @Override
                         public void actionPerformed(ActionEvent e) {
-                            client.send("/pm " + clickedUser + " " + privateChatField.getText());
-                            privateChatField.setText("");
+                            String message = privateChatField.getText();
+                            if (!message.trim().isEmpty()) {
+                                client.send("/PM, " + clickedUser + ", " + message);
+                                privateChatArea.append(identifiant + " : " + message + "\n");
+                                privateChatField.setText("");
+                            }
                         }
                     });
 
