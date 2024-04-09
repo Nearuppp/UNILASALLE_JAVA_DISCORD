@@ -159,7 +159,7 @@ public class Server {
 
                                     // Envoyer l'historique des messages du salon "général" au client
                                     try (PreparedStatement stmt2 = connection.prepareStatement(
-                                            "SELECT * FROM messages WHERE channel_id = ? ORDER BY timestamp DESC LIMIT 50")) {
+                                            "SELECT * FROM messages WHERE channel_id = ? ORDER BY timestamp ASC LIMIT 50")) {
                                         stmt2.setInt(1, 1); // ID du salon "général"
                                         try (ResultSet rs2 = stmt2.executeQuery()) {
                                             while (rs2.next()) {
@@ -266,7 +266,7 @@ public class Server {
 
                                                 // Envoyer l'historique des messages dans le général aux clients
                                                 try (PreparedStatement stmt3 = connection.prepareStatement(
-                                                        "SELECT * FROM messages WHERE channel_id = ? ORDER BY timestamp DESC LIMIT 50")) {
+                                                        "SELECT * FROM messages WHERE channel_id = ? ORDER BY timestamp ASC LIMIT 50")) {
                                                     stmt3.setInt(1, 1); // ID du salon "général"
                                                     try (ResultSet rs3 = stmt3.executeQuery()) {
                                                         while (rs3.next()) {
@@ -350,7 +350,7 @@ public class Server {
                         // Envoyer l'historique des messages du salon
                         if (channelId != -1) {
                             try (PreparedStatement stmt3 = connection.prepareStatement(
-                                    "SELECT * FROM messages WHERE channel_id = ? ORDER BY timestamp DESC LIMIT 50")) {
+                                    "SELECT * FROM messages WHERE channel_id = ? ORDER BY timestamp ASC LIMIT 50")) {
                                 stmt3.setInt(1, channelId);
                                 try (ResultSet rs3 = stmt3.executeQuery()) {
                                     while (rs3.next()) {

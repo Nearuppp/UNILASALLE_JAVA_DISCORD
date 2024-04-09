@@ -6,11 +6,8 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
 import java.util.Arrays;
-import java.io.*;
-
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
-
 import org.json.JSONObject;
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -18,7 +15,6 @@ import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.nio.file.Path;
-import java.awt.event.*;
 
 public class ClientApp {
 
@@ -275,11 +271,55 @@ public class ClientApp {
         textField.setFont(new Font("SansSerif", Font.PLAIN, screenSize.height / 40));
         frame.add(textField, BorderLayout.SOUTH);
 
-        // Ajouter une zone pour les utilisateurs connectés
-        JTextArea usersArea = new JTextArea();
-        usersArea.setEditable(false);
-        usersArea.setFont(new Font("SansSerif", Font.PLAIN, screenSize.height / 60));
-        frame.add(new JScrollPane(usersArea), BorderLayout.EAST);
+        DefaultListModel<String> usersModel = new DefaultListModel<>();
+        JList<String> usersList = new JList<>(usersModel);
+        usersList.setFont(new Font("SansSerif", Font.PLAIN, screenSize.height / 60));
+        frame.add(new JScrollPane(usersList), BorderLayout.EAST);
+
+        // Create a new JFrame for the private chat
+        JFrame privateChatFrame = new JFrame("Messages privés");
+        privateChatFrame.setForeground(frame.getForeground());
+        privateChatFrame.setBackground(frame.getBackground());
+        privateChatFrame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+        privateChatFrame.setSize(frame.getWidth() / 2, frame.getHeight() / 2);
+        privateChatFrame.setLocationRelativeTo(frame);
+
+        // Add a JTextArea for the chat messages
+        JTextArea privateChatArea = new JTextArea();
+        privateChatArea.setEditable(false);
+        privateChatArea.setFont(messageArea.getFont());
+        privateChatArea.setLineWrap(true);
+        privateChatArea.setWrapStyleWord(true);
+        privateChatFrame.add(new JScrollPane(privateChatArea), BorderLayout.CENTER);
+
+        // Add a JTextField for inputting messages
+        JTextField privateChatField = new JTextField();
+        privateChatField.setFont(textField.getFont());
+        privateChatFrame.add(privateChatField, BorderLayout.SOUTH);
+
+        // Ajoutez un MouseListener à usersList
+        usersList.addMouseListener(new MouseAdapter() {
+            public void mouseClicked(MouseEvent evt) {
+                if (evt.getClickCount() == 2) { // Double-click detected
+                    int index = usersList.locationToIndex(evt.getPoint());
+                    String clickedUser = usersModel.getElementAt(index);
+
+                    client.send("/pm_history " + clickedUser);
+
+                    // Send the message when Enter is pressed
+                    privateChatField.addActionListener(new ActionListener() {
+                        @Override
+                        public void actionPerformed(ActionEvent e) {
+                            client.send("/pm " + clickedUser + " " + privateChatField.getText());
+                            privateChatField.setText("");
+                        }
+                    });
+
+                    // Make the private chat window visible
+                    privateChatFrame.setVisible(true);
+                }
+            }
+        });
 
         // Remplacez JTextArea par JList et DefaultListModel
         DefaultListModel<String> channelsModel = new DefaultListModel<>();
@@ -297,7 +337,7 @@ public class ClientApp {
         });
 
         // Définir la taille préférée pour le JScrollPane
-        JScrollPane usersScrollPane = new JScrollPane(usersArea);
+        JScrollPane usersScrollPane = new JScrollPane(usersList);
         usersScrollPane.setPreferredSize(new Dimension(screenSize.width / 8, screenSize.height / 2));
         frame.add(usersScrollPane, BorderLayout.EAST);
 
@@ -437,8 +477,8 @@ public class ClientApp {
                     textField.setForeground(Color.white);
                     textField.setBackground(Color.black);
 
-                    usersArea.setForeground(Color.white);
-                    usersArea.setBackground(Color.black);
+                    usersList.setForeground(Color.white);
+                    usersList.setBackground(Color.black);
 
                     channelsList.setForeground(Color.white);
                     channelsList.setBackground(Color.black);
@@ -461,8 +501,8 @@ public class ClientApp {
                     textField.setForeground(Color.black);
                     textField.setBackground(Color.white);
 
-                    usersArea.setForeground(Color.black);
-                    usersArea.setBackground(Color.white);
+                    usersList.setForeground(Color.black);
+                    usersList.setBackground(Color.white);
 
                     channelsList.setForeground(Color.black);
                     channelsList.setBackground(Color.white);
@@ -482,10 +522,10 @@ public class ClientApp {
 
                     if (finalMessage.startsWith("CONNECTED USERS:")) {
                         SwingUtilities.invokeLater(() -> {
-                            usersArea.setText("Utilisateurs connectés : \n");
-                            String[] users = finalMessage.substring("CONNECTED USERS:".length()).split(", ");
-                            for (String user : users) {
-                                usersArea.append(user + "\n");
+                            usersModel.clear();
+                            String[] channels = finalMessage.substring("AVAILABLE ROOMS:".length()).split(", ");
+                            for (String channel : channels) {
+                                usersModel.addElement(channel);
                             }
                         });
                     }
