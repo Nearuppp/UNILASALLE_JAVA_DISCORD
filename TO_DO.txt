@@ -6,15 +6,12 @@
 - Pouvoir rejoindre un salon directement en cliquant dessus /
 - commande pour afficher le nombre d'hotes connectés au serveur /
 - pouvoir créer et supprimer les salons s'il on est admin / 
+- mettre les gens dans le channel par défaut si on supprime le channel dans lequel des gens se trouvent /
 - historique des messages /
 - ne pas pouvoir se connecter avec un utiilsateur s'il est déjà connecté / 
-- mettre les gens dans le channel par défaut si on supprime le channel dans lequel des gens se trouvent /
 - Theme clair sombre / 
 - Bouton de déconnexion / 
--
--
+- pouvoir envoyer un message privé (avec historique) /
 
 - créer un compte guest 
-- pouvoir envoyer un message privé 
 - pouvoir ban un utilisateur
-- pouvoir s'appeler

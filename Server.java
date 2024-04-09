@@ -258,7 +258,7 @@ public class Server {
 
                         // Ajouter le message privé à la base de données
                         try (PreparedStatement stmt = connection.prepareStatement(
-                                "INSERT INTO private_messages (sender_id, receiver_id, message) VALUES (?, ?, ?)")) {
+                                "INSERT INTO private_messages (sender_id, receiver_id, message, timestamp) VALUES (?, ?, ?, CURRENT_TIMESTAMP)")) {
                             stmt.setInt(1, senderId);
                             stmt.setInt(2, recipientId);
                             stmt.setString(3, message);
