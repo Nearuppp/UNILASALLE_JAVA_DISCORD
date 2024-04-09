@@ -303,7 +303,7 @@ public class ClientApp {
                 if (evt.getClickCount() == 2) { // Double-click detected
                     int index = usersList.locationToIndex(evt.getPoint());
                     String clickedUser = usersModel.getElementAt(index);
-
+                    System.out.println("test");
                     client.send("/pm_history " + clickedUser);
 
                     // Send the message when Enter is pressed
@@ -523,7 +523,7 @@ public class ClientApp {
                     if (finalMessage.startsWith("CONNECTED USERS:")) {
                         SwingUtilities.invokeLater(() -> {
                             usersModel.clear();
-                            String[] channels = finalMessage.substring("AVAILABLE ROOMS:".length()).split(", ");
+                            String[] channels = finalMessage.substring("CONNECTED USERS:".length()).split(", ");
                             for (String channel : channels) {
                                 usersModel.addElement(channel);
                             }
@@ -558,6 +558,20 @@ public class ClientApp {
                             messageArea.append("\n\n-- Le salon " + deletedRoom
                                     + " a été supprimé. Vous avez été déplacé vers le salon général --\n\n");
                             messageArea.setCaretPosition(messageArea.getDocument().getLength());
+                        });
+
+                    } else if (finalMessage.startsWith("PM_HISTORY ")) {
+                        SwingUtilities.invokeLater(() -> {
+                            String mp = finalMessage.substring("PM_HISTORY ".length());
+                            privateChatArea.append(mp + "\n");
+                            privateChatArea.setCaretPosition(privateChatArea.getDocument().getLength());
+                        });
+
+                    } else if (finalMessage.startsWith("PM: ")) {
+                        SwingUtilities.invokeLater(() -> {
+                            String mp = finalMessage.substring("PM: ".length());
+                            privateChatArea.append(mp + "\n");
+                            privateChatArea.setCaretPosition(privateChatArea.getDocument().getLength());
                         });
 
                     } else {

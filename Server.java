@@ -9,6 +9,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import org.mindrot.jbcrypt.BCrypt;
+import java.net.SocketException;
 
 // Définition de la classe ChatRoom
 class ChatRoom {
@@ -127,6 +128,21 @@ public class Server {
         }
     }
 
+    private int getUserId(String username) throws SQLException {
+        try (PreparedStatement stmt = connection.prepareStatement(
+                "SELECT id FROM users WHERE username = ?")) {
+            stmt.setString(1, username);
+
+            try (ResultSet rs = stmt.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getInt("id");
+                } else {
+                    throw new SQLException("User not found: " + username);
+                }
+            }
+        }
+    }
+
     private void handleClient(Socket clientSocket, PrintWriter out) {
         try (BufferedReader in = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()))) {
 
@@ -205,6 +221,30 @@ public class Server {
                 } else if (inputLine.matches(".*\\s/HELP.*") || inputLine.matches(".*\\s/help.*")) {
                     out.println("Commandes disponibles : \n/nb_users : Affiche le nombre d'utilisateurs connectés\n");
 
+                } else if (inputLine.startsWith("/pm_history ")) {
+                    String recipientName = inputLine.split(" ")[1];
+                    username = clientUsers.get(out);
+
+                    int userId = getUserId(username);
+                    int recipientId = getUserId(recipientName);
+
+                    try (PreparedStatement stmt = connection.prepareStatement(
+                            "SELECT * FROM private_messages WHERE (sender_id = ? AND receiver_id = ?) OR (sender_id = ? AND receiver_id = ?) ORDER BY timestamp DESC LIMIT 50")) {
+                        stmt.setInt(1, userId);
+                        stmt.setInt(2, recipientId);
+                        stmt.setInt(3, recipientId);
+                        stmt.setInt(4, userId);
+
+                        try (ResultSet rs = stmt.executeQuery()) {
+                            while (rs.next()) {
+                                String message = rs.getString("message");
+                                out.println("PM_HISTORY " + message);
+                                System.out.println("PM_HISTORY " + message);
+                            }
+                        }
+                    } catch (SQLException e) {
+                        out.println("ERROR - COULD NOT RETRIEVE PM HISTORY");
+                    }
                 } else if (inputLine.matches("admin : /create .*")) {
                     String roomName = parts[3];
 
@@ -418,7 +458,17 @@ public class Server {
                 }
 
             }
+        } catch (
 
+        SocketException e) {
+            System.out.println("Client déconnecté : " + clientUsers.get(out));
+            // Retirer le client de son salon actuel
+            ChatRoom currentRoom = clientRooms.get(out);
+            if (currentRoom != null) {
+                currentRoom.getClients().remove(out);
+            }
+            clientRooms.remove(out);
+            clientUsers.remove(out);
         } catch (IOException | SQLException e) {
             e.printStackTrace();
         } finally {
