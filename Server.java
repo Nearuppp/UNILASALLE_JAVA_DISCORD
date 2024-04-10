@@ -159,6 +159,22 @@ public class Server {
         return username;
     }
 
+    private boolean checkAdmin(int userId) {
+        boolean isAdmin = false;
+        try (PreparedStatement stmt = connection.prepareStatement(
+                "SELECT admin FROM users WHERE id = ?")) {
+            stmt.setInt(1, userId);
+            try (ResultSet rs = stmt.executeQuery()) {
+                if (rs.next()) {
+                    isAdmin = rs.getBoolean("admin");
+                }
+            }
+        } catch (SQLException e) {
+            System.out.println("ERROR - COULD NOT CHECK ADMIN STATUS");
+        }
+        return isAdmin;
+    }
+
     private void handleClient(Socket clientSocket, PrintWriter out) {
         try (BufferedReader in = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()))) {
 
@@ -294,8 +310,17 @@ public class Server {
                     }
                 }
 
-                else if (inputLine.matches("admin : /create .*")) {
+                else if (inputLine.matches(".*/create .*")) {
                     String roomName = parts[3];
+
+                    // Récupérer l'ID de l'utilisateur à partir de son nom d'utilisateur
+                    int userId = getUserId(clientUsers.get(out));
+
+                    // Vérifier si l'utilisateur est un administrateur
+                    if (!checkAdmin(userId)) {
+                        out.println("Vous n'êtes pas autorisé à créer un salon.");
+                        return;
+                    }
 
                     // Vérifier si le salon existe dans la base de données
                     try (PreparedStatement stmt = connection.prepareStatement(
@@ -316,8 +341,75 @@ public class Server {
                     } catch (SQLException e) {
                         e.printStackTrace();
                     }
-                } else if (inputLine.matches("admin : /delete .*")) {
+                } else if (inputLine.matches(".*/admin_add .*")) {
+                    String nom = parts[3];
+
+                    // Récupérer l'ID de l'utilisateur à partir de son nom d'utilisateur
+                    int userId = getUserId(clientUsers.get(out));
+
+                    // Vérifier si l'utilisateur est un administrateur
+                    if (!checkAdmin(userId)) {
+                        out.println("Vous n'êtes pas autorisé à modifier le statut d'un utilisateur.");
+                        return;
+                    }
+
+                    // Récupérer l'ID de l'utilisateur à promouvoir
+                    int targetUserId = getUserId(nom);
+                    if (targetUserId == -1) {
+                        out.println("L'utilisateur " + nom + " n'existe pas.");
+                        return;
+                    }
+
+                    // Promouvoir l'utilisateur à administrateur
+                    try (PreparedStatement stmt = connection.prepareStatement(
+                            "UPDATE users SET admin = TRUE WHERE id = ?")) {
+                        stmt.setInt(1, targetUserId);
+                        stmt.executeUpdate();
+                        out.println("L'utilisateur " + nom + " est maintenant administrateur.");
+                    } catch (SQLException e) {
+                        e.printStackTrace();
+                    }
+                } else if (inputLine.matches(".*/admin_del .*")) {
+                    String nom = parts[3];
+
+                    // Récupérer l'ID de l'utilisateur à partir de son nom d'utilisateur
+                    int userId = getUserId(clientUsers.get(out));
+
+                    // Vérifier si l'utilisateur est un administrateur
+                    if (!checkAdmin(userId)) {
+                        out.println("Vous n'êtes pas autorisé à modifier le statut d'un utilisateur.");
+                        return;
+                    }
+
+                    // Récupérer l'ID de l'utilisateur à démouvoir
+                    int targetUserId = getUserId(nom);
+                    if (targetUserId == -1) {
+                        out.println("L'utilisateur " + nom + " n'existe pas.");
+                        return;
+                    }
+
+                    // Démouvoir l'utilisateur de administrateur
+                    try (PreparedStatement stmt = connection.prepareStatement(
+                            "UPDATE users SET admin = FALSE WHERE id = ?")) {
+                        stmt.setInt(1, targetUserId);
+                        stmt.executeUpdate();
+                        out.println("L'utilisateur " + nom + " n'est plus administrateur.");
+                    } catch (SQLException e) {
+                        e.printStackTrace();
+                    }
+                }
+
+                else if (inputLine.matches(".*/delete .*")) {
                     String roomName = parts[3];
+
+                    // Récupérer l'ID de l'utilisateur à partir de son nom d'utilisateur
+                    int userId = getUserId(clientUsers.get(out));
+
+                    // Vérifier si l'utilisateur est un administrateur
+                    if (!checkAdmin(userId)) {
+                        out.println("Vous n'êtes pas autorisé à supprimer un salon.");
+                        return;
+                    }
 
                     // Vérifier si le salon existe dans la base de données
                     try (PreparedStatement stmt = connection.prepareStatement(
