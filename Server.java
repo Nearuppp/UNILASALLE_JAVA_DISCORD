@@ -251,7 +251,17 @@ public class Server {
                     clientUsers.remove(out);
 
                 } else if (inputLine.matches(".*\\s/HELP.*") || inputLine.matches(".*\\s/help.*")) {
-                    out.println("Commandes disponibles : \n/nb_users : Affiche le nombre d'utilisateurs connectés\n");
+                    out.println("""
+                                Commandes disponibles : \n/nb_users : Affiche le nombre d'utilisateurs connectés\n
+                            /pm_history : Affiche l'historique des messages privés\n
+                            /list_channels : Affiche la liste des salons disponibles\n
+                            /create : Crée un nouveau salon\n
+                            /delete : Supprime un salon\n
+                            /join : Rejoint un salon\n
+                            /help : Affiche les commandes disponibles\n\n
+                            Pour envoyer un message privé, utilisez le format : /PM, destinataire, message\n
+                            Pour envoyer un message dans un salon, tapez simplement le message\n\n
+                            """);
 
                 } else if (inputLine.startsWith("/pm_history ")) {
                     String recipientName = inputLine.split(" ")[1];
